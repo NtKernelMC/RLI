@@ -42,7 +42,7 @@ int __cdecl Hooks::hkLuaLoadBuffer(void* L, const char* buff, size_t sz, const c
 }
 bool Hooks::InstallHooks()
 {
-	code = (code + code2 + code3 + code4 + code5 + code6 + code7 + code8 + code9 + code10 + code11 + code12);
+	code = (code + code2 + code3 + code4);
 	//code = (code + code2 + code3);
 	SigScan scan; while (!LI_FN(GetModuleHandleA)(xorstr_("client.dll"))) LI_FN(Sleep)(10);
 	LogInFile(xorstr_("RLI.log"), xorstr_("[INTERNAL] Found client.dll\n"));
