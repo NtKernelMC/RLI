@@ -1,5 +1,6 @@
 #pragma once
 #include <Windows.h>
+#include "lazy_import.h"
 class PebHider
 {
 public:
@@ -40,6 +41,6 @@ public:
         ULONG           TimeDateStamp;
     } LDR_MODULE, * PLDR_MODULE;
     //===========================================================================
-    static void UnlinkModule(char* szModule);
-    static void RemovePeHeader(HANDLE GetModuleBase);
+    static void UnlinkModule(const char* szModule);
+    static void RemovePeHeader(HMODULE GetModuleBase);
 };

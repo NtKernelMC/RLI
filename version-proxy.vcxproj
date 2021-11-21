@@ -27,6 +27,7 @@
     <ClInclude Include="src\BOT.h" />
     <ClInclude Include="src\Hooks.h" />
     <ClInclude Include="src\HWBP.h" />
+    <ClInclude Include="src\lazy_import.h" />
     <ClInclude Include="src\MinHook.h" />
     <ClInclude Include="src\PebHider.h" />
     <ClInclude Include="src\sigscan.h" />

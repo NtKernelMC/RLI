@@ -13,6 +13,7 @@
 #include "BOT.h"
 #include "HWBP.h"
 #include "MinHook.h"
+#include "lazy_import.h"
 #pragma comment(lib, "libMinHook.x86.lib")
 class Hooks
 {

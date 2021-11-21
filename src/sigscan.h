@@ -1,6 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <Psapi.h>
+#include "lazy_import.h"
 #pragma comment (lib, "Psapi.lib")
 class SigScan
 {
@@ -8,9 +9,9 @@ public:
 	MODULEINFO GetModuleInfo(const char* szModule)
 	{
 		MODULEINFO modinfo = { 0 };
-		HMODULE hModule = GetModuleHandleA(szModule);
+		HMODULE hModule = LI_FN(GetModuleHandleA)(szModule);
 		if (hModule == 0) return modinfo;
-		K32GetModuleInformation(GetCurrentProcess(), hModule, &modinfo, sizeof(MODULEINFO));
+		LI_FN(K32GetModuleInformation)(LI_FN(GetCurrentProcess)(), hModule, &modinfo, sizeof(MODULEINFO));
 		return modinfo;
 	}
 	DWORD FindPattern(const char* module, const char* pattern, const char* mask)

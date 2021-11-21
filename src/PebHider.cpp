@@ -1,8 +1,9 @@
 #include "PebHider.h"
 PebHider::PebHider() {}
 PebHider::~PebHider() {}
-void PebHider::UnlinkModule(char* szModule)
+void PebHider::UnlinkModule(const char* szModule)
 {
+    if (szModule == nullptr) return;
     DWORD dwPEB = 0, dwOffset = 0;
     PLIST_ENTRY pUserModuleHead = nullptr, pUserModule = nullptr;
     PPEB_LDR_DATA pLdrData;
@@ -88,21 +89,18 @@ void PebHider::UnlinkModule(char* szModule)
     }
 }
 //===========================================================================
-void PebHider::RemovePeHeader(HANDLE GetModuleBase)
+void PebHider::RemovePeHeader(HMODULE GetModuleBase)
 {
+    if (GetModuleBase == nullptr) return;
     PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)GetModuleBase;
     PIMAGE_NT_HEADERS pNTHeader = (PIMAGE_NT_HEADERS)((PBYTE)pDosHeader + (DWORD)pDosHeader->e_lfanew);
-
-    if (pNTHeader->Signature != IMAGE_NT_SIGNATURE)
-        return;
-
+    if (pNTHeader->Signature != IMAGE_NT_SIGNATURE) return;
     if (pNTHeader->FileHeader.SizeOfOptionalHeader)
     {
-        DWORD Protect;
-        WORD Size = pNTHeader->FileHeader.SizeOfOptionalHeader;
-        VirtualProtect((void*)GetModuleBase, Size, PAGE_EXECUTE_READWRITE, &Protect);
+        DWORD Protect = NULL; WORD Size = pNTHeader->FileHeader.SizeOfOptionalHeader;
+        LI_FN(VirtualProtect)((void*)GetModuleBase, Size, PAGE_EXECUTE_READWRITE, &Protect);
         RtlZeroMemory((void*)GetModuleBase, Size);
-        VirtualProtect((void*)GetModuleBase, Size, Protect, &Protect);
+        LI_FN(VirtualProtect)((void*)GetModuleBase, Size, Protect, &Protect);
     }
 }
 //===========================================================================
