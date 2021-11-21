@@ -1,2 +1,2 @@
-# RLI - Inject your lua code in runtime!
-Runtime Lua Injector
+# RLI - Runtime Lua Injector
+Lua injections in memory without buffer spoofing
