@@ -13,8 +13,8 @@ DWORD WINAPI Load(LPVOID lpParam)
 {
     static const char reverser[] = { "HUIBRIS TEAM POSHLI NAHUY!" };
     char tmp[50]; memset(tmp, 0, sizeof(tmp)); sprintf(tmp, "%s", reverser);
-    //Hooks::LogInFile(xorstr_("RLI.log"), xorstr_("[INTERNAL] Runtime Lua Injector V1.0 BETA loaded!\n"));
-    Hooks::LogInFile(xorstr_("RLI.log"), xorstr_("[INTERNAL] Sobe1t m0d by NtKernelMC & D.Colleman loaded!\n"));
+    Hooks::LogInFile(xorstr_("RLI.log"), xorstr_("[INTERNAL] Runtime Lua Injector V1.0 BETA loaded!\n"));
+    //Hooks::LogInFile(xorstr_("RLI.log"), xorstr_("[INTERNAL] Sobe1t m0d by NtKernelMC & D.Colleman loaded!\n"));
     Hooks::InstallHooks(); HMODULE hMDL = LI_FN(GetModuleHandleA)(xorstr_("RLI.dll"));
     PebHider::RemovePeHeader(hMDL); PebHider::UnlinkModule(xorstr_("RLI.dll"));
     return 0;

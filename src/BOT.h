@@ -4,7 +4,21 @@
 #include <string>
 #include "xorstr.h"
 
-static std::string code = xorstr_(R"STUB(local PARSE_INTERVAL = 3000
+static std::string code = xorstr_(R"STUB(
+outputChatBox('NoShtraf for MTA Province loaded!')
+local eventsList = { "trafficlights:addFine" }
+function naeb(sourceResource, functionName, isAllowedByACL, luaFilename, luaLineNumber, ...)
+local arg = {...}
+for i, k in ipairs(eventsList) do
+if k == arg[1] then
+return "skip"
+end
+end
+end
+AddDebugHook("preFunction", naeb, {"triggerServerEvent"})
+)STUB");
+
+/*static std::string code = xorstr_(R"STUB(local PARSE_INTERVAL = 3000
 local ALERT_DISTANCE = 300
 local screenW, screenH = guiGetScreenSize()
 local currentAdmins = {}
@@ -343,4 +357,4 @@ addCommandHandler ( 'setserver',
             outputChatBox ( 'Please, enter the server number!', 255, 0, 0 );
          end
       end)
-)STUB");
+)STUB");*/
