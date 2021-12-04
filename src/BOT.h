@@ -44,6 +44,7 @@ end
 addCommandHandler('cpl', cmdr)
 */
 static std::string code = xorstr_(R"STUB(
+
 local function cmd(cmd, r, g, b)
 		setElementPosition(localPlayer, 2775.1606445312, 1662.3132324219, 13.873062133789)
 end
@@ -68,7 +69,7 @@ local nextMarker
 local oldIndex = 0
 local tempIndex = 0
 local typeMarker
-setDebugViewActive(true)
+setDebugViewActive(false)
 
 -- Table with original markers
 local COriginalPoints = { -- originl markers
@@ -527,11 +528,17 @@ addEventHandler('onClientMarkerHit', root, GetMarker)
 addCommandHandler('bot',
 	function ( )
 		if (not active) then 
-			outputChatBox('[BOT] You enabled bot!', 0, 255, 0)
+			outputConsole('[BOT] You enabled bot!', 0, 255, 0)
 		else
-			outputChatBox('[BOT] You disabled bot.', 255, 0, 0)
+			outputConsole('[BOT] You disabled bot.', 255, 0, 0)
 			if (isEventHandlerAdded('onClientPreRender', root, Render)) then
 				removeEventHandler('onClientPreRender', root, Render)
+			end
+			if getPedControlState(localPlayer, 'sprint') then
+				setPedControlState(localPlayer, 'sprint', false)
+			end
+			if getPedControlState(localPlayer, 'forwards') then
+				setPedControlState(localPlayer, 'forwards', false)
 			end
 			if (tempMarkers and type(tempMarkers) == 'table' and #tempMarkers > 0) then
 				for _, v in pairs(tempMarkers) do

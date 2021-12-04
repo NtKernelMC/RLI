@@ -8,6 +8,7 @@
 #include <string>
 #include <algorithm>
 #include <direct.h>
+#include <codecvt>
 #include "sigscan.h"
 #include "xorstr.h"
 #include "BOT.h"
@@ -21,6 +22,17 @@ public:
 	Hooks();
 	~Hooks();
 	static BYTE prologue[6];
+	static std::string utf8_to_cp1251(const char* str);
+	static bool findStringIC(const std::string& strHaystack, const std::string& strNeedle);
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	typedef void(__thiscall* ptrDrawString)(void *ECX, int uiLeft, int uiTop, int uiRight, int uiBottom, 
+	unsigned long ulColor, const char* szText, float fScaleX, float fScaleY,
+	unsigned long ulFormat, void* pDXFont, bool bOutline);
+	static void __fastcall DrawString(void* ECX, void* EDX, int uiLeft, int uiTop, int uiRight, int uiBottom,
+	unsigned long ulColor, const char* szText, float fScaleX, float fScaleY,
+	unsigned long ulFormat, void* pDXFont, bool bOutline);
+	static ptrDrawString callDrawString;
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	typedef bool (__thiscall* ptrAddDebugHook)(void *ECX, int hookType, void* functionRef, void* allowedNameList);
 	static ptrAddDebugHook callAddDebugHook;
 	static bool __fastcall AddDebugHook(void* ECX, void *EDX, int hookType, void* functionRef, void* allowedNameList);

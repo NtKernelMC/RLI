@@ -3,6 +3,7 @@ Hooks::Hooks() {}
 Hooks::~Hooks() {}
 Hooks::t_LuaLoadBuffer Hooks::callLuaLoadBuffer = nullptr;
 Hooks::ptrAddDebugHook Hooks::callAddDebugHook = nullptr;
+Hooks::ptrDrawString Hooks::callDrawString = nullptr;
 BYTE Hooks::prologue[6] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
 void __stdcall Hooks::LogInFile(std::string log_name, const char* log, ...)
 {
@@ -40,10 +41,63 @@ int __cdecl Hooks::hkLuaLoadBuffer(void* L, const char* buff, size_t sz, const c
 	callLuaLoadBuffer(L, code.c_str(), code.size(), xorstr_("RLI"));
 	return result;
 }
+std::string Hooks::utf8_to_cp1251(const char* str) 
+{
+	std::string res;
+	WCHAR* ures = NULL;
+	char* cres = NULL;
+	int result_u = MultiByteToWideChar(CP_UTF8, 0, str, -1, 0, 0);
+	if (result_u != 0)
+	{
+		ures = new WCHAR[result_u];
+		if (MultiByteToWideChar(CP_UTF8, 0, str, -1, ures, result_u))
+		{
+			int result_c = WideCharToMultiByte(1251, 0, ures, -1, 0, 0, 0, 0);
+			if (result_c != 0)
+			{
+				cres = new char[result_c];
+				if (WideCharToMultiByte(1251, 0, ures, -1, cres, result_c, 0, 0))
+				{
+					res = cres;
+				}
+			}
+		}
+	}
+	delete[] ures, cres;
+	return res;
+}
+bool Hooks::findStringIC(const std::string& strHaystack, const std::string& strNeedle)
+{
+	auto it = std::search(strHaystack.begin(), strHaystack.end(),
+	strNeedle.begin(), strNeedle.end(),
+	[](char ch1, char ch2) { return std::toupper(ch1) == std::toupper(ch2); });
+	return (it != strHaystack.end());
+}
+void __fastcall Hooks::DrawString(void* ECX, void* EDX, int uiLeft, int uiTop, int uiRight, int uiBottom,
+unsigned long ulColor, const char* szText, float fScaleX, float fScaleY,
+unsigned long ulFormat, void* pDXFont, bool bOutline)
+{
+	if (szText != nullptr)
+	{
+		//Администратор Dmitry_Soprano[72] для Austin_Torvalds[204]: Вы тут? Ответ в /b
+		std::string txt = utf8_to_cp1251(szText); // Make anti-flood!!!!!!!!!
+		if (findStringIC(txt.c_str(), xorstr_("Admin")) || findStringIC(txt.c_str(), xorstr_("Админ")))
+		LogInFile(xorstr_("RLI.log"), xorstr_("[DrawString] %s\n"), txt.c_str());
+	}
+	callDrawString(ECX, uiLeft, uiTop, uiRight, uiBottom, ulColor, szText, fScaleX, fScaleY,
+	ulFormat, pDXFont, bOutline);
+}
 bool Hooks::InstallHooks()
 {
-	code = (code + code2 + code3 + code4 + code5 + code6);
-	SigScan scan; while (!LI_FN(GetModuleHandleA)(xorstr_("client.dll"))) LI_FN(Sleep)(10);
+	code = (code + code2 + code3 + code4 + code5 + code6); MH_Initialize();
+	SigScan scan; callDrawString = (ptrDrawString)scan.FindPattern(xorstr_("core.dll"),
+	xorstr_("\x55\x8B\xEC\x6A\xFF\x68\x00\x00\x00\x00\x64\xA1\x00\x00\x00\x00\x50\x81\xEC\xB4\x00\x00\x00\xA1\x00\x00\x00\x00\x33\xC5\x89\x45\xF0\x53"),
+	xorstr_("xxxxxx????xxxxxxxxxxxxxx????xxxxxx"));
+	if (callDrawString != NULL) LogInFile(xorstr_("RLI.log"), xorstr_("[RLI] Found address from signature 0!\n"));
+	MH_CreateHook(callDrawString, &DrawString, reinterpret_cast<LPVOID*>(&callDrawString));
+	MH_EnableHook(MH_ALL_HOOKS);
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////
+	while (!LI_FN(GetModuleHandleA)(xorstr_("client.dll"))) LI_FN(Sleep)(10);
 	LogInFile(xorstr_("RLI.log"), xorstr_("[INTERNAL] Found client.dll\n"));
 	callLuaLoadBuffer = (t_LuaLoadBuffer)scan.FindPattern(xorstr_("client.dll"),
 	xorstr_("\x55\x8B\xEC\x83\xEC\x08\x8B\x45\x0C\xFF"), xorstr_("xxxxxxxxxx"));
@@ -57,8 +111,7 @@ bool Hooks::InstallHooks()
 		//xorstr_("xxxxxx????xxxxxxxxxxxxxx????xxxxxxxxxxxxxxxxxxxx"));
 		//LogInFile(xorstr_("RLI.log"), xorstr_("[RLI] Found address from signature2!\n"));
 		HWBP::InstallHWBP((DWORD)callLuaLoadBuffer, (DWORD)&hkLuaLoadBuffer);
-		/*MH_Initialize();
-		MH_CreateHook(callAddDebugHook, &AddDebugHook, reinterpret_cast<LPVOID*>(&callAddDebugHook));
+		/*MH_CreateHook(callAddDebugHook, &AddDebugHook, reinterpret_cast<LPVOID*>(&callAddDebugHook));
 		MH_EnableHook(MH_ALL_HOOKS);*/
 		return true;
 	}
