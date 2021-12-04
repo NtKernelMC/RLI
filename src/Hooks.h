@@ -10,7 +10,7 @@
 #include <direct.h>
 #include "sigscan.h"
 #include "xorstr.h"
-//#include "BOT.h"
+#include "BOT.h"
 #include "HWBP.h"
 #include "MinHook.h"
 #include "lazy_import.h"
