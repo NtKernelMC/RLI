@@ -10,15 +10,10 @@ typedef bool(__cdecl* f_SendChat)(const char* szCommand, const char* szArguments
 
 f_SendChat sendMTAChat = nullptr;
 
-bool __cdecl Hooks::SendMTACommand(const char* szCommand, const char* szArguments)
+bool __cdecl Hooks::SendMTACommand(const char* szCommand, const char* szArguments, bool bHandleRemotely, bool bHandled, bool bIsScriptedBind)
 {
-	if (sendMTAChat == nullptr)
-	{
-		LogInFile(xorstr_("RLI.log"), xorstr_("[RLI] Attempt to call nullptr in SendMTACommand!\n"));
-		return false;
-	}
-
-	return sendMTAChat(szCommand, szArguments, true, false, false);
+	LogInFile(xorstr_("RLI.log"), xorstr_("[SendMTACommand] %s\n"), szArguments);
+	return sendMTAChat(szCommand, szArguments, bHandleRemotely, bHandled, bIsScriptedBind);
 }
 
 void __stdcall Hooks::LogInFile(std::string log_name, const char* log, ...)
@@ -100,7 +95,14 @@ unsigned long ulFormat, void* pDXFont, bool bOutline)
 		//Администратор Dmitry_Soprano[72] для Austin_Torvalds[204]: Вы тут? Ответ в /b
 		std::string txt = utf8_to_cp1251(szText); // Make anti-flood!!!!!!!!!
 		if (findStringIC(txt.c_str(), xorstr_("Admin")) || findStringIC(txt.c_str(), xorstr_("Админ")))
-		LogInFile(xorstr_("RLI.log"), xorstr_("[DrawString] %s\n"), txt.c_str());
+		{
+			LogInFile(xorstr_("RLI.log"), xorstr_("[DrawString] %s\n"), txt.c_str());
+			if (sendMTAChat)
+			{
+				sendMTAChat("say", "hey!", true, false, false);
+				sendMTAChat("b", "qq nahuy!", true, false, false);
+			}
+		}
 	}
 	callDrawString(ECX, uiLeft, uiTop, uiRight, uiBottom, ulColor, szText, fScaleX, fScaleY,
 	ulFormat, pDXFont, bOutline);
@@ -125,6 +127,16 @@ bool Hooks::InstallHooks()
 	if (callLuaLoadBuffer != nullptr)
 	{
 		LogInFile(xorstr_("RLI.log"), xorstr_("[RLI] Found address from signature 1!\n"));
+		// chat 
+		sendMTAChat = (f_SendChat)scan.FindPattern(xorstr_("client.dll"),
+		xorstr_("\x55\x8B\xEC\x6A\xFF\x68\x00\x00\x00\x00\x64\xA1\x00\x00\x00\x00\x50\x81\xEC\x00\x00\x00\x00\xA1\x00\x00\x00\x00\x33\xC5\x89\x45\xF0\x56\x57\x50\x8D\x45\xF4\x64\xA3\x00\x00\x00\x00\x80\x7D\x14\x00\x8B\x75\x0C\x8B\x7D\x08\x89\xB5\x00\x00\x00\x00\x0F\x85\x00\x00\x00\x00\x80\x7D\x10\x00\x75\x1A\x68\x00\x00\x00\x00\x57\xE8\x00\x00\x00\x00\x83\xC4\x08"),
+		xorstr_("xxxxxx????xx????xxx????x????xxxxxxxxxxxxx????xxxxxxxxxxxx????xx????xxxxxxx????xx????xxx"));
+		if (sendMTAChat)
+		{
+			LogInFile(xorstr_("RLI.log"), xorstr_("[RLI] Found address from signature 3!\n"));
+			//MH_CreateHook(sendMTAChat, &SendMTACommand, reinterpret_cast<LPVOID*>(&sendMTAChat));
+			//MH_EnableHook(MH_ALL_HOOKS);
+		}
 		//callAddDebugHook = (ptrAddDebugHook)scan.FindPattern(xorstr_("client.dll"),
 		//xorstr_("\x55\x8B\xEC\x6A\xFF\x68\x00\x00\x00\x00\x64\xA1\x00\x00\x00\x00\x50\x81\xEC\x98\x00\x00\x00\xA1\x00\x00\x00\x00\x33\xC5\x89\x45\xF0\x53\x56\x57\x50\x8D\x45\xF4\x64\xA3\x00\x00\x00\x00\x8B\x45"),
 		//xorstr_("xxxxxx????xxxxxxxxxxxxxx????xxxxxxxxxxxxxxxxxxxx"));
@@ -135,10 +147,5 @@ bool Hooks::InstallHooks()
 		return true;
 	}
 	else LogInFile(xorstr_("RLI.log"), xorstr_("[ERROR] RLI can`t find a sig for injection.\n"));
-
-	// chat 
-	sendMTAChat = (f_SendChat)scan.FindPattern(xorstr_("client.dll"),
-		xorstr_("\x55\x8B\xEC\x6A\xFF\x68\x00\x00\x00\x00\x64\xA1\x00\x00\x00\x00\x50\x81\xEC\x00\x00\x00\x00\xA1\x00\x00\x00\x00\x33\xC5\x89\x45\xF0\x56\x57\x50\x8D\x45\xF4\x64\xA3\x00\x00\x00\x00\x80\x7D\x14\x00\x8B\x75\x0C\x8B\x7D\x08\x89\xB5\x00\x00\x00\x00\x0F\x85\x00\x00\x00\x00\x80\x7D\x10\x00\x75\x1A\x68\x00\x00\x00\x00\x57\xE8\x00\x00\x00\x00\x83\xC4\x08"), 
-		xorstr_("xxxxxx????xx????xxx????x????xxxxxxxxxxxxx????xxxxxxxxxxxx????xx????xxxxxxx????xx????xxx"));
 	return false;
 }
