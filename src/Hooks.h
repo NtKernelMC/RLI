@@ -42,5 +42,7 @@ public:
 	typedef int(__cdecl* t_LuaLoadBuffer)(void* L, const char* buff, size_t sz, const char* name);
 	static t_LuaLoadBuffer callLuaLoadBuffer;
 	static int __cdecl hkLuaLoadBuffer(void* L, const char* buff, size_t sz, const char* name);
+	static bool __cdecl Hooks::SendMTACommand(const char* szCommand, const char* szArguments);
+
     static bool InstallHooks();
 };

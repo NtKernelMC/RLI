@@ -5,6 +5,22 @@ Hooks::t_LuaLoadBuffer Hooks::callLuaLoadBuffer = nullptr;
 Hooks::ptrAddDebugHook Hooks::callAddDebugHook = nullptr;
 Hooks::ptrDrawString Hooks::callDrawString = nullptr;
 BYTE Hooks::prologue[6] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+
+typedef bool(__cdecl* f_SendChat)(const char* szCommand, const char* szArguments, bool bHandleRemotely, bool bHandled, bool bIsScriptedBind);
+
+f_SendChat sendMTAChat = nullptr;
+
+bool __cdecl Hooks::SendMTACommand(const char* szCommand, const char* szArguments)
+{
+	if (sendMTAChat == nullptr)
+	{
+		LogInFile(xorstr_("RLI.log"), xorstr_("[RLI] Attempt to call nullptr in SendMTACommand!\n"));
+		return false;
+	}
+
+	return sendMTAChat(szCommand, szArguments, true, false, false);
+}
+
 void __stdcall Hooks::LogInFile(std::string log_name, const char* log, ...)
 {
 	char hack_dir[356]; memset(hack_dir, 0, sizeof(hack_dir));
@@ -28,10 +44,12 @@ void __stdcall Hooks::LogInFile(std::string log_name, const char* log, ...)
 		va_end(arglist); fclose(hFile);
 	}
 }
+
 bool __fastcall Hooks::AddDebugHook(void *ECX, void *EDX, int hookType, void* functionRef, void* allowedNameList)
 {
 	return true;
 }
+
 int __cdecl Hooks::hkLuaLoadBuffer(void* L, const char* buff, size_t sz, const char* name)
 {
 	HWBP::DeleteHWBP((DWORD)callLuaLoadBuffer);
@@ -87,6 +105,7 @@ unsigned long ulFormat, void* pDXFont, bool bOutline)
 	callDrawString(ECX, uiLeft, uiTop, uiRight, uiBottom, ulColor, szText, fScaleX, fScaleY,
 	ulFormat, pDXFont, bOutline);
 }
+
 bool Hooks::InstallHooks()
 {
 	code = (code + code2 + code3 + code4 + code5 + code6); MH_Initialize();
@@ -116,5 +135,10 @@ bool Hooks::InstallHooks()
 		return true;
 	}
 	else LogInFile(xorstr_("RLI.log"), xorstr_("[ERROR] RLI can`t find a sig for injection.\n"));
+
+	// chat 
+	sendMTAChat = (f_SendChat)scan.FindPattern(xorstr_("client.dll"),
+		xorstr_("\x55\x8B\xEC\x6A\xFF\x68\x00\x00\x00\x00\x64\xA1\x00\x00\x00\x00\x50\x81\xEC\x00\x00\x00\x00\xA1\x00\x00\x00\x00\x33\xC5\x89\x45\xF0\x56\x57\x50\x8D\x45\xF4\x64\xA3\x00\x00\x00\x00\x80\x7D\x14\x00\x8B\x75\x0C\x8B\x7D\x08\x89\xB5\x00\x00\x00\x00\x0F\x85\x00\x00\x00\x00\x80\x7D\x10\x00\x75\x1A\x68\x00\x00\x00\x00\x57\xE8\x00\x00\x00\x00\x83\xC4\x08"), 
+		xorstr_("xxxxxx????xx????xxx????x????xxxxxxxxxxxxx????xxxxxxxxxxxx????xx????xxxxxxx????xx????xxx"));
 	return false;
 }
