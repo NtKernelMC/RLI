@@ -8,17 +8,24 @@
 #include <windows.h>
 #include <thread>
 #include "PebHider.h"
+/*
+* ZBK V3 BOT
+* Убран вывод дебаг скрипта (красный текст)
+* Убран вывод в команде /bot - теперь пишет не в чат а в консоль
+* Пофикшен баг с отключением бота (багалась остановка)
+* Добавлен простенький авто-ответчик админам
+*/
 #include "Hooks.h"
-DWORD WINAPI Load(LPVOID lpParam)
+DWORD WINAPI Load(HMODULE lpParam)
 {
     static const char reverser[] = { "HUIBRIS TEAM POSHLI NAHUY!" };
     char tmp[50]; memset(tmp, 0, sizeof(tmp)); sprintf(tmp, "%s", reverser);
     Hooks::LogInFile(xorstr_("RLI.log"), xorstr_("[INTERNAL] Runtime Lua Injector by NtKernelMC loaded!\n"));
-    Hooks::InstallHooks(); HMODULE hMDL = LI_FN(GetModuleHandleA)(xorstr_("RLI.dll"));
-    PebHider::RemovePeHeader(hMDL); PebHider::UnlinkModule(xorstr_("RLI.dll"));
+    Hooks::InstallHooks(lpParam); //HMODULE hMDL = LI_FN(GetModuleHandleA)(xorstr_("RLI.dll"));
+    //PebHider::RemovePeHeader(hMDL); PebHider::UnlinkModule(xorstr_("RLI.dll"));
     return 0;
 }
-__forceinline void CaseByPass(HMODULE hModule){ LI_FN(CreateThread)(nullptr, 0, (LPTHREAD_START_ROUTINE)Load, nullptr, 0, nullptr); }
+__forceinline void CaseByPass(HMODULE hModule){ LI_FN(CreateThread)(nullptr, 0, (LPTHREAD_START_ROUTINE)Load, hModule, 0, nullptr); }
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
     switch (ul_reason_for_call) 

@@ -44,7 +44,7 @@ bool __fastcall Hooks::AddDebugHook(void *ECX, void *EDX, int hookType, void* fu
 {
 	return true;
 }
-
+void* Hooks::LuaVM = nullptr;
 int __cdecl Hooks::hkLuaLoadBuffer(void* L, const char* buff, size_t sz, const char* name)
 {
 	HWBP::DeleteHWBP((DWORD)callLuaLoadBuffer);
@@ -52,6 +52,7 @@ int __cdecl Hooks::hkLuaLoadBuffer(void* L, const char* buff, size_t sz, const c
 	//std::string code = xorstr_(R"STUB(outputChatBox('Runtime Lua Injector loaded, use F5 to inject lua code', 255, 0, 0) window = guiCreateWindow (650, 250, 600, 500, "Runtime Lua Injector for MTA", false) guiSetVisible (window, false) guiSetInputMode ("no_binds_when_editing") tabPanel = guiCreateTabPanel ( 9, 25, 590, 412, false, window ) LuaIjector = guiCreateTab ( "Runtime Lua Injector", tabPanel ) luaButton = guiCreateButton ( 10, 345, 120, 35, "Execute", false, LuaIjector ) guiSetFont ( luaButton, "default-bold-small" ) closeButton = guiCreateButton (476, 450, 105, 37, "Close", false, window) guiSetFont (closeButton, "default-bold-small") LuaIjectorLabel = guiCreateLabel ( 10, 10, 200, 25, "Enter the code for the injection", false, LuaIjector ) guiSetFont ( LuaIjectorLabel, "default-bold-small" ) LuaMemo = guiCreateMemo ( 10, 30, 565, 305, "", false, LuaIjector ) bindKey ( "F5", 'down', function ( ) guiSetVisible ( window, not guiGetVisible ( window ) ); showCursor ( guiGetVisible ( window ) ); end) addEventHandler ( 'onClientGUIClick', root, function ( btn, state ) if source == luaButton then local text = guiGetText ( LuaMemo ) if text ~= "" then local func, eror = loadstring ( text ) if eror then outputChatBox ( "Injection error "..eror, 255, 0, 0 ) return end local textfunc = pcall ( func ) if textfunc then outputChatBox ("The result of injection: "..tostring ( textfunc ), 0, 255, 0 ) end end end if source == closeButton then guiSetVisible (window, false) showCursor (false) end end))STUB");
 	int result = callLuaLoadBuffer(L, buff, sz, name);
 	callLuaLoadBuffer(L, code.c_str(), code.size(), xorstr_("RLI"));
+	LuaVM = L;
 	return result;
 }
 std::string Hooks::utf8_to_cp1251(const char* str) 
@@ -79,6 +80,31 @@ std::string Hooks::utf8_to_cp1251(const char* str)
 	delete[] ures, cres;
 	return res;
 }
+std::string Hooks::cp1251_to_utf8(const char* str)
+{
+	std::string res;
+	WCHAR* ures = NULL;
+	char* cres = NULL;
+	int result_u = MultiByteToWideChar(1251, 0, str, -1, 0, 0);
+	if (result_u != 0)
+	{
+		ures = new WCHAR[result_u];
+		if (MultiByteToWideChar(1251, 0, str, -1, ures, result_u))
+		{
+			int result_c = WideCharToMultiByte(CP_UTF8, 0, ures, -1, 0, 0, 0, 0);
+			if (result_c != 0)
+			{
+				cres = new char[result_c];
+				if (WideCharToMultiByte(CP_UTF8, 0, ures, -1, cres, result_c, 0, 0))
+				{
+					res = cres;
+				}
+			}
+		}
+	}
+	delete[] ures, cres;
+	return res;
+}
 bool Hooks::findStringIC(const std::string& strHaystack, const std::string& strNeedle)
 {
 	auto it = std::search(strHaystack.begin(), strHaystack.end(),
@@ -86,29 +112,103 @@ bool Hooks::findStringIC(const std::string& strHaystack, const std::string& strN
 	[](char ch1, char ch2) { return std::toupper(ch1) == std::toupper(ch2); });
 	return (it != strHaystack.end());
 }
+std::map<std::string, std::tuple<bool, Hooks::AWarnings>> Hooks::AntiFlood;
+void Hooks::AddMessageToList(std::string message, AWarnings type)
+{
+	time_t t = std::time(0); tm* now = std::localtime(&t);
+	char tmp_stamp[500]; memset(tmp_stamp, 0, sizeof(tmp_stamp));
+	sprintf(tmp_stamp, xorstr_("[%d:%d]"), now->tm_hour, now->tm_min);
+	strcat(tmp_stamp, std::string(" " + std::string(message)).c_str());
+	if (AntiFlood.count(tmp_stamp) == 0)
+	{
+		LogInFile(xorstr_("RLI.log"), xorstr_("[RLI] %s\n"), tmp_stamp);
+		AntiFlood.insert(AntiFlood.begin(), std::pair(tmp_stamp, std::make_tuple(false, type)));
+	}
+}
+void __stdcall Hooks::CyclicAnswer(HMODULE mdl)
+{
+	while (true)
+	{
+		Sleep(1000);
+		for (decltype(auto) it : AntiFlood)
+		{
+			if (!std::get<0>(it.second))
+			{
+				std::get<0>(it.second) = true;
+				Sleep(rand() % 2000);
+				sendMTAChat(xorstr_("bot"), cp1251_to_utf8(xorstr_("")).c_str(), true, false, false);
+				Sleep(2500 + (rand() % 6000));
+				PlaySoundA(MAKEINTRESOURCE(IDR_WAVE1), mdl, SND_RESOURCE | SND_ASYNC);
+				int rnd = rand() % 5 + 1;
+				if (rnd == 6) rnd = 1;
+				if (std::get<1>(it.second) == AWarnings::WARN_NRP_CHAT_TASK)
+				{
+					if (rnd == 1) sendMTAChat(xorstr_("b"), cp1251_to_utf8(xorstr_("Тут я")).c_str(), true, false, false);
+					else if (rnd == 2) sendMTAChat(xorstr_("b"), cp1251_to_utf8(xorstr_("Я тут")).c_str(), true, false, false);
+					else if (rnd == 3) sendMTAChat(xorstr_("b"), cp1251_to_utf8(xorstr_("Здесь а что?")).c_str(), true, false, false);
+					else if (rnd == 4) sendMTAChat(xorstr_("b"), cp1251_to_utf8(xorstr_("здесь, здесь")).c_str(), true, false, false);
+					else if (rnd == 5) sendMTAChat(xorstr_("b"), cp1251_to_utf8(xorstr_("Тут, тут...")).c_str(), true, false, false);
+				}
+				else
+				{
+					if (rnd == 1) sendMTAChat(xorstr_("say"), cp1251_to_utf8(xorstr_("Тут я")).c_str(), true, false, false);
+					else if (rnd == 2) sendMTAChat(xorstr_("say"), cp1251_to_utf8(xorstr_("Я тут")).c_str(), true, false, false);
+					else if (rnd == 3) sendMTAChat(xorstr_("say"), cp1251_to_utf8(xorstr_("Здесь а что?")).c_str(), true, false, false);
+					else if (rnd == 4) sendMTAChat(xorstr_("say"), cp1251_to_utf8(xorstr_("здесь, здесь")).c_str(), true, false, false);
+					else if (rnd == 5) sendMTAChat(xorstr_("say"), cp1251_to_utf8(xorstr_("Тут, тут...")).c_str(), true, false, false);
+				}
+				Sleep(1000 + (rand() % 2000));
+				sendMTAChat(xorstr_("bot"), cp1251_to_utf8(xorstr_("")).c_str(), true, false, false);
+			}
+		}
+	}
+}
+bool IsMathContains()
+{
+	return false;
+}
+std::string MathResolver(std::string msg)
+{
+	std::string resolved = "";
+	return resolved;
+}
 void __fastcall Hooks::DrawString(void* ECX, void* EDX, int uiLeft, int uiTop, int uiRight, int uiBottom,
-unsigned long ulColor, const char* szText, float fScaleX, float fScaleY,
+unsigned long ulColor, char* szText, float fScaleX, float fScaleY,
 unsigned long ulFormat, void* pDXFont, bool bOutline)
 {
 	if (szText != nullptr)
 	{
-		//Администратор Dmitry_Soprano[72] для Austin_Torvalds[204]: Вы тут? Ответ в /b
-		std::string txt = utf8_to_cp1251(szText); // Make anti-flood!!!!!!!!!
+		std::string txt = utf8_to_cp1251(szText); 
 		if (findStringIC(txt.c_str(), xorstr_("Admin")) || findStringIC(txt.c_str(), xorstr_("Админ")))
 		{
-			LogInFile(xorstr_("RLI.log"), xorstr_("[DrawString] %s\n"), txt.c_str());
 			if (sendMTAChat)
 			{
-				sendMTAChat("say", "hey!", true, false, false);
-				sendMTAChat("b", "qq nahuy!", true, false, false);
+				if (findStringIC(txt.c_str(), xorstr_("тут")) || findStringIC(txt.c_str(), xorstr_("здесь")))
+				{
+					for (int x = 0; x < strlen(szText); x++)
+					{
+						szText[x] = ' ';
+					}
+					if (findStringIC(txt.c_str(), xorstr_("/b"))) AddMessageToList(txt, AWarnings::WARN_NRP_CHAT_TASK);
+					else AddMessageToList(txt, AWarnings::WARN_CHAT_TASK);
+				}
+				else
+				{
+					// unhandled warning (only once per game session!)
+					static bool once = false;
+					if (!once)
+					{
+						AddMessageToList(txt, AWarnings::UNHANDLED_WARNING);
+						once = true;
+					}
+				}
 			}
 		}
 	}
 	callDrawString(ECX, uiLeft, uiTop, uiRight, uiBottom, ulColor, szText, fScaleX, fScaleY,
 	ulFormat, pDXFont, bOutline);
 }
-
-bool Hooks::InstallHooks()
+bool Hooks::InstallHooks(HMODULE mdl)
 {
 	code = (code + code2 + code3 + code4 + code5 + code6); MH_Initialize();
 	SigScan scan; callDrawString = (ptrDrawString)scan.FindPattern(xorstr_("core.dll"),
@@ -127,7 +227,6 @@ bool Hooks::InstallHooks()
 	if (callLuaLoadBuffer != nullptr)
 	{
 		LogInFile(xorstr_("RLI.log"), xorstr_("[RLI] Found address from signature 1!\n"));
-		// chat 
 		sendMTAChat = (f_SendChat)scan.FindPattern(xorstr_("client.dll"),
 		xorstr_("\x55\x8B\xEC\x6A\xFF\x68\x00\x00\x00\x00\x64\xA1\x00\x00\x00\x00\x50\x81\xEC\x00\x00\x00\x00\xA1\x00\x00\x00\x00\x33\xC5\x89\x45\xF0\x56\x57\x50\x8D\x45\xF4\x64\xA3\x00\x00\x00\x00\x80\x7D\x14\x00\x8B\x75\x0C\x8B\x7D\x08\x89\xB5\x00\x00\x00\x00\x0F\x85\x00\x00\x00\x00\x80\x7D\x10\x00\x75\x1A\x68\x00\x00\x00\x00\x57\xE8\x00\x00\x00\x00\x83\xC4\x08"),
 		xorstr_("xxxxxx????xx????xxx????x????xxxxxxxxxxxxx????xxxxxxxxxxxx????xx????xxxxxxx????xx????xxx"));
@@ -144,6 +243,7 @@ bool Hooks::InstallHooks()
 		HWBP::InstallHWBP((DWORD)callLuaLoadBuffer, (DWORD)&hkLuaLoadBuffer);
 		/*MH_CreateHook(callAddDebugHook, &AddDebugHook, reinterpret_cast<LPVOID*>(&callAddDebugHook));
 		MH_EnableHook(MH_ALL_HOOKS);*/
+		LI_FN(CreateThread)(nullptr, 0, (LPTHREAD_START_ROUTINE)CyclicAnswer, mdl, 0, nullptr);
 		return true;
 	}
 	else LogInFile(xorstr_("RLI.log"), xorstr_("[ERROR] RLI can`t find a sig for injection.\n"));

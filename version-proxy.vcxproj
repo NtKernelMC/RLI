@@ -24,6 +24,7 @@
     <ClCompile Include="src\PebHider.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="resource.h" />
     <ClInclude Include="src\BOT.h" />
     <ClInclude Include="src\Hooks.h" />
     <ClInclude Include="src\HWBP.h" />
@@ -32,6 +33,12 @@
     <ClInclude Include="src\PebHider.h" />
     <ClInclude Include="src\sigscan.h" />
     <ClInclude Include="src\xorstr.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RLI.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="MissileAllert_01.wav" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

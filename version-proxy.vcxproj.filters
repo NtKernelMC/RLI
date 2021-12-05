@@ -42,5 +42,12 @@
     <ClInclude Include="src\lazy_import.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RLI.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="MissileAllert_01.wav" />
   </ItemGroup>
 </Project>
