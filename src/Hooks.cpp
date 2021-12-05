@@ -136,7 +136,7 @@ void __stdcall Hooks::CyclicAnswer(HMODULE mdl)
 			{
 				std::get<0>(it.second) = true;
 				Sleep(rand() % 2000);
-				sendMTAChat(xorstr_("bot"), cp1251_to_utf8(xorstr_("")).c_str(), true, false, false);
+				sendMTAChat(xorstr_("start_ai"), cp1251_to_utf8(xorstr_("")).c_str(), true, false, false);
 				Sleep(2500 + (rand() % 6000));
 				PlaySoundA(MAKEINTRESOURCE(IDR_WAVE1), mdl, SND_RESOURCE | SND_ASYNC);
 				int rnd = rand() % 5 + 1;
@@ -158,7 +158,7 @@ void __stdcall Hooks::CyclicAnswer(HMODULE mdl)
 					else if (rnd == 5) sendMTAChat(xorstr_("say"), cp1251_to_utf8(xorstr_("Тут, тут...")).c_str(), true, false, false);
 				}
 				Sleep(1000 + (rand() % 2000));
-				sendMTAChat(xorstr_("bot"), cp1251_to_utf8(xorstr_("")).c_str(), true, false, false);
+				sendMTAChat(xorstr_("start_ai"), cp1251_to_utf8(xorstr_("")).c_str(), true, false, false);
 			}
 		}
 	}
@@ -182,6 +182,14 @@ unsigned long ulFormat, void* pDXFont, bool bOutline)
 	if (szText != nullptr)
 	{
 		std::string txt = utf8_to_cp1251(szText); 
+		if (findStringIC(txt.c_str(), xorstr_("телепортированы")))
+		{
+			for (int x = 0; x < strlen(szText); x++)
+			{
+				szText[x] = ' ';
+			}
+			sendMTAChat(xorstr_("start_ai"), cp1251_to_utf8(xorstr_("")).c_str(), true, false, false);
+		}
 		if (findStringIC(txt.c_str(), xorstr_("Admin")) || findStringIC(txt.c_str(), xorstr_("Админ")))
 		{
 			if (sendMTAChat)

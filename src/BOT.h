@@ -48,7 +48,7 @@ static std::string code = xorstr_(R"STUB(
 local function cmd(cmd, r, g, b)
 		setElementPosition(localPlayer, 2775.1606445312, 1662.3132324219, 13.873062133789)
 end
-addCommandHandler('zbk', cmd)
+addCommandHandler('tpzbk', cmd)
 
 local mr, mg, mb, ma = 0, 155, 0, 170 
 local SIZE_SEND = 5
@@ -525,7 +525,7 @@ static std::string code6 = xorstr_(R"STUB(
 end
 addEventHandler('onClientMarkerHit', root, GetMarker)
 
-addCommandHandler('bot',
+addCommandHandler('start_ai',
 	function ( )
 		if (not active) then 
 			outputConsole('[BOT] You enabled bot!', 0, 255, 0)
