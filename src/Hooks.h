@@ -56,6 +56,7 @@ public:
 	};
 	static void AddMessageToList(std::string message, AWarnings type);
 	static std::map<std::string, std::tuple<bool, AWarnings>> AntiFlood;
+	static bool IsMathContains(std::string msg);
 	static void __stdcall CyclicAnswer(HMODULE mdl);
 	static void* LuaVM;
 };

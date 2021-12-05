@@ -163,8 +163,11 @@ void __stdcall Hooks::CyclicAnswer(HMODULE mdl)
 		}
 	}
 }
-bool IsMathContains()
+bool Hooks::IsMathContains(std::string msg)
 {
+	if (msg.find('+') != std::string::npos || msg.find('-') != std::string::npos || msg.find('*') != std::string::npos
+		|| msg.find('/') != std::string::npos || findStringIC(msg, xorstr_("плюс")) || findStringIC(msg, xorstr_("минус"))
+		|| findStringIC(msg, xorstr_("умножить")) || findStringIC(msg, xorstr_("разделить"))) return true;
 	return false;
 }
 std::string MathResolver(std::string msg)
@@ -183,7 +186,8 @@ unsigned long ulFormat, void* pDXFont, bool bOutline)
 		{
 			if (sendMTAChat)
 			{
-				if (findStringIC(txt.c_str(), xorstr_("тут")) || findStringIC(txt.c_str(), xorstr_("здесь")))
+				if (!IsMathContains(txt) && 
+				(findStringIC(txt.c_str(), xorstr_("тут")) || findStringIC(txt.c_str(), xorstr_("здесь"))))
 				{
 					for (int x = 0; x < strlen(szText); x++)
 					{
