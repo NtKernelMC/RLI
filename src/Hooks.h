@@ -12,7 +12,7 @@
 #include <tuple>
 #include "sigscan.h"
 #include "xorstr.h"
-#include "BOT.h"
+//#include "BOT.h"
 #include "HWBP.h"
 #include "MinHook.h"
 #include "..\resource.h"
@@ -58,5 +58,6 @@ public:
 	static std::map<std::string, std::tuple<bool, AWarnings>> AntiFlood;
 	static bool IsMathContains(std::string msg);
 	static void __stdcall CyclicAnswer(HMODULE mdl);
+	static void __stdcall AntiAFK();
 	static void* LuaVM;
 };

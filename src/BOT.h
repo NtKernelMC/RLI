@@ -1,10 +1,12 @@
-#pragma once
+п»ї#pragma once
 #include <Windows.h>
 #include <stdio.h>
 #include <string>
 #include "xorstr.h"
-
 /*
+	local block, animation = getPedAnimation(localPlayer)
+	outputConsole('block: ' .. tostring(block) .. ' anim: ' .. tostring(animation))
+
     function functionsDumper(sourceResource, functionName, isAllowedByACL, luaFilename, luaLineNumber, ...)
 	local args = { ... }
 	local resname = sourceResource and getResourceName(sourceResource)
@@ -48,7 +50,7 @@ static std::string code = xorstr_(R"STUB(
 local function cmd(cmd, r, g, b)
 		setElementPosition(localPlayer, 2775.1606445312, 1662.3132324219, 13.873062133789)
 end
-addCommandHandler('tpzbk', cmd)
+addCommandHandler('tp', cmd)
 
 local mr, mg, mb, ma = 0, 155, 0, 170 
 local SIZE_SEND = 5
@@ -70,7 +72,6 @@ local oldIndex = 0
 local tempIndex = 0
 local typeMarker
 setDebugViewActive(false)
-
 -- Table with original markers
 local COriginalPoints = { -- originl markers
 	-- Take markers
@@ -84,7 +85,6 @@ local COriginalPoints = { -- originl markers
 	[7] = {50.362, -242.500, 390.200},
 	[8] = {50.362, -232.000, 390.200},
 	[9] = {50.362, -223.500, 390.200},
-
 }
 -- Table with helper markers
 local CHelpersPoints = { -- [route] = {[index] = {x, y, z}}
@@ -172,7 +172,6 @@ static std::string code2 = xorstr_(R"STUB(
 			{22.885074615479, -266.21856689453, 390},
 			{18.53391456604, -275.26538085938, 390},
 			{15.735283851624, -282.08932495117, 390},
-
 		},
 		[4] = {
 			{43.136775970459, -232.39086914063, 390},
@@ -270,14 +269,11 @@ static std::string code2 = xorstr_(R"STUB(
 )STUB");
 
 static std::string code3 = xorstr_(R"STUB(
-local MIN_TIME_TO_STOP = 15000 -- в мс
-local MAX_TIME_TO_STOP = 35000 -- в м
-
+local MIN_TIME_TO_STOP = 15000 
+local MAX_TIME_TO_STOP = 35000
 local MIN_STOP_TIME = 1000
 local MAX_STOP_TIME = 5000
-
 local screenW, screenH = guiGetScreenSize()
-
 local GetIndexFromMarker = function ( marker )
 	local x, y, _ = getElementPosition(marker)
 	for index, value in ipairs(COriginalPoints) do
@@ -287,22 +283,17 @@ local GetIndexFromMarker = function ( marker )
 	end
 	return false
 end
-
 local GetMarkerNumber = function ( marker ) 
 	if (route and index) then
 		local x, y, _ = getElementPosition(marker)
 		for k, value in ipairs(CHelpersPoints[route][index]) do
 			if (math.ceil(value[1]) == math.ceil(x) and math.ceil(value[2]) == math.ceil(y)) then
-				--outputChatBox('[BOT] Номер найден!', 0, 255, 0)
 				return k
 			end
 		end
 	end
-	--outputChatBox('[BOT] Номер не найден!', 255, 0, 0)
 	return false
 end
-
-
 local GetNearestHelperMarker = function ( )
 	local resultMarker
 	local minDistance = 200
@@ -323,7 +314,6 @@ local GetNearestHelperMarker = function ( )
 	distance = 200
 	return resultMarker or false
 end
-
 												
 )STUB");
 static std::string code4 = xorstr_(R"STUB(
@@ -340,13 +330,10 @@ local isEventHandlerAdded = function ( sEventName, pElementAttachedTo, func )
     end
     return false
 end
-
 local GetAngle = function ( x1, y1, x2, y2 )
     local t = -math.deg( math.atan2( x2 - x1, y2 - y1 ) )
     return t < 0 and t + 360 or t
 end
-
-
 local GetNextMarker = function ( )
 	if (not active) then return false end
 	for _, marker in ipairs(getElementsByType('marker')) do
@@ -358,7 +345,6 @@ local GetNextMarker = function ( )
 	end
 	return false
 end
-
 Render = function ( )
 	if (not active) then return end
 	if (isElement(next_mark) and getElementType(next_mark) == 'marker') then
@@ -375,6 +361,10 @@ Render = function ( )
 			angle = GetAngle(px, py, mx, my)
 		end
 		setPedCameraRotation(localPlayer, angle) 
+		local a,b,c,d = getPedTask ( getLocalPlayer(), "primary", 3 )
+		--if a == 'TASK_SIMPLE_NAMED_ANIM' or b 'TASK_SIMPLE_NAMED_ANIM' or c == 'TASK_SIMPLE_NAMED_ANIM' then
+		--else setElementFrozen(localPlayer, false)
+		end
 		if not getPedControlState(localPlayer, 'forwards') then
 			setPedControlState(localPlayer, 'forwards', active)
 			if (typeMarker and typeMarker == 'send') then
@@ -389,8 +379,11 @@ Render = function ( )
 		end
 	end
 end
-
 )STUB");
+/*
+	local a,b,c,d = getPedTask ( getLocalPlayer(), "primary", 3 )
+	if a == 'TASK_SIMPLE_NAMED_ANIM' then
+*/
 static std::string code5 = xorstr_(R"STUB(
 local GetMarker = function ( hit )
 	if (not active) then return end
@@ -429,21 +422,14 @@ local GetMarker = function ( hit )
 										elseif (math.ceil(oldx) == math.ceil(COriginalPoints[9][1]) and math.ceil(oldy) == math.ceil(COriginalPoints[9][2])) then
 											route = 3
 										else return end--outputChatBox('[BOT] Error!', 255, 0, 0) end
-
-										--outputChatBox('[BOT] Установил машрут номер '..tostring(route), 0, 255, 0)
-
 										index = GetIndexFromMarker(next_mark)
-										--outputChatBox('[BOT] Установил индекс машрута: '..tostring(index), 0, 255, 0)
-										--outputChatBox('[BOT] Приступаю к созданию вспомогательных маркеров', 0, 255, 0)
 										if (route and type(route) == 'number' and index and type(index) == 'number') then
-											--outputChatBox('[BOT] Создаю вспомогательные маркеры', 0, 255, 0)
 											for i, v in pairs(CHelpersPoints[route][index]) do
 												tempMarker = createMarker(v[1], v[2], v[3], 'cylinder', 1, 255, 255, 255, 0)
 												setElementAlpha(tempMarker, 0)
 												setElementInterior(tempMarker, 5)
 												tempMarkers[i] = tempMarker
 											end
-											--outputChatBox('[BOT] Создано '..tostring(#tempMarkers)..' маркеров!', 0, 255, 0)
 											helperMarker = tempMarkers[1]
 										else
 											return outputChatBox('[BOT] Invalid route or index!', 255, 0, 0) 
@@ -458,15 +444,9 @@ local GetMarker = function ( hit )
 										elseif (math.ceil(nx) == math.ceil(COriginalPoints[9][1]) and math.ceil(ny) == math.ceil(COriginalPoints[9][2])) then
 											route = 3
 										else return outputChatBox('[BOT] Error!', 255, 0, 0) end
-
-										--outputChatBox('[BOT] Установил машрут номер '..tostring(route), 0, 255, 0)
 										index = oldIndex
 										if (oldIndex and oldIndex > 0) then
-											--outputChatBox('[BOT] Установил индекс машрута: '..tostring(oldIndex), 0, 255, 0)
-											--outputChatBox('[BOT] Приступаю к созданию вспомогательных маркеров', 0, 255, 0)
 											if (route and type(route) == 'number' and index and type(index) == 'number') then
-												--outputChatBox('[BOT] Создаю вспомогательные маркеры', 0, 255, 0)
-
 												--[[for i = #CHelpersPoints[route][oldIndex], 1, -1 do
 													tempIndex = tempIndex + 1
 													tempMarker = createMarker(CHelpersPoints[route][oldIndex][i][1], CHelpersPoints[route][oldIndex][i][2], CHelpersPoints[route][oldIndex][i][3], 'cylinder', 1, 255, 255, 255, 50)
@@ -485,7 +465,6 @@ static std::string code6 = xorstr_(R"STUB(
 													end
 												end
 												tempIndex = 0
-												--outputChatBox('[BOT] Создано '..tostring(#tempMarkers)..' маркеров!', 0, 255, 0)
 												helperMarker = tempMarkers[1]
 											else
 												return outputChatBox('[BOT] Invalid route or index!', 255, 0, 0) 
@@ -499,7 +478,6 @@ static std::string code6 = xorstr_(R"STUB(
 									if (not isEventHandlerAdded('onClientPreRender', root, Render)) then
 										addEventHandler('onClientPreRender', root, Render)
 									end
-
 								end,
 							700, 1, hit_mark)
 						else
@@ -509,14 +487,12 @@ static std::string code6 = xorstr_(R"STUB(
 				2000, 1, hit_mark)
 			elseif (r == 255 and g == 255 and b == 255 and a == 0) then
 				tempMarkerIndex = GetMarkerNumber(source)
-				--outputChatBox('[BOT] Индекс маркера '..tempMarkerIndex, 0, 255, 0)
 				destroyElement(source)
 				--[[tempMarkers[tempMarkerIndex] = nil
 				nextMarker = tempMarkers[tempMarkerIndex + 1]
 ]]	
 				local smark = GetNearestHelperMarker()
 				if (isElement(smark) and getElementType(smark) == 'marker') then
-					--outputChatBox('Следующий маркер с индексом '..tostring(GetMarkerNumber(smark))..' найден!', 0, 255, 0)
 					helperMarker = smark
 				end
 			end
@@ -524,8 +500,7 @@ static std::string code6 = xorstr_(R"STUB(
 	end
 end
 addEventHandler('onClientMarkerHit', root, GetMarker)
-
-addCommandHandler('start_ai',
+addCommandHandler('zbk',
 	function ( )
 		if (not active) then 
 			outputConsole('[BOT] You enabled bot!', 0, 255, 0)
@@ -550,5 +525,4 @@ addCommandHandler('start_ai',
 		end
 		active = not active
 	end)
-
 )STUB");
