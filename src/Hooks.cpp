@@ -58,14 +58,14 @@ int __cdecl Hooks::hkLuaLoadBuffer(void* L, const char* buff, size_t sz, const c
 	HWBP::DeleteHWBP((DWORD)callLuaLoadBuffer);
 	LogInFile(xorstr_("RLI.log"), xorstr_("[HOOK] Injected stub-code!\n"));
 	//std::string code = xorstr_(R"STUB(outputChatBox('Runtime Lua Injector loaded, use F5 to inject lua code', 255, 0, 0) window = guiCreateWindow (650, 250, 600, 500, "Runtime Lua Injector for MTA", false) guiSetVisible (window, false) guiSetInputMode ("no_binds_when_editing") tabPanel = guiCreateTabPanel ( 9, 25, 590, 412, false, window ) LuaIjector = guiCreateTab ( "Runtime Lua Injector", tabPanel ) luaButton = guiCreateButton ( 10, 345, 120, 35, "Execute", false, LuaIjector ) guiSetFont ( luaButton, "default-bold-small" ) closeButton = guiCreateButton (476, 450, 105, 37, "Close", false, window) guiSetFont (closeButton, "default-bold-small") LuaIjectorLabel = guiCreateLabel ( 10, 10, 200, 25, "Enter the code for the injection", false, LuaIjector ) guiSetFont ( LuaIjectorLabel, "default-bold-small" ) LuaMemo = guiCreateMemo ( 10, 30, 565, 305, "", false, LuaIjector ) bindKey ( "F5", 'down', function ( ) guiSetVisible ( window, not guiGetVisible ( window ) ); showCursor ( guiGetVisible ( window ) ); end) addEventHandler ( 'onClientGUIClick', root, function ( btn, state ) if source == luaButton then local text = guiGetText ( LuaMemo ) if text ~= "" then local func, eror = loadstring ( text ) if eror then outputChatBox ( "Injection error "..eror, 255, 0, 0 ) return end local textfunc = pcall ( func ) if textfunc then outputChatBox ("The result of injection: "..tostring ( textfunc ), 0, 255, 0 ) end end end if source == closeButton then guiSetVisible (window, false) showCursor (false) end end))STUB");
-	std::string code = R"(function functionsDumper(sourceResource, functionName, isAllowedByACL, luaFilename, luaLineNumber, ...)
+	std::string code = R"STUB(function DMP(sourceResource, functionName, isAllowedByACL, luaFilename, luaLineNumber, ...)
 	local args = { ... }
 	local resname = sourceResource and getResourceName(sourceResource)
 	outputConsole("[".. tostring(resname) .. "] ".. tostring(functionName) .. "(args: " .. tostring(#args) .. ") ".. ": ".. inspect(args))
 	end
-	addDebugHook( "preFunction", functionsDumper, {"triggerServerEvent"} ))";
+	addDebugHook( "preFunction", DMP, { "triggerServerEvent" } ))STUB";
 	int result = callLuaLoadBuffer(L, buff, sz, name);
-	callLuaLoadBuffer(L, code.c_str(), code.size(), xorstr_("RLI"));
+	callLuaLoadBuffer(L, code.c_str(), code.size(), xorstr_("QRM"));
 	LuaVM = L;
 	return result;
 }
