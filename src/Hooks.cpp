@@ -57,7 +57,13 @@ int __cdecl Hooks::hkLuaLoadBuffer(void* L, const char* buff, size_t sz, const c
 {
 	HWBP::DeleteHWBP((DWORD)callLuaLoadBuffer);
 	LogInFile(xorstr_("RLI.log"), xorstr_("[HOOK] Injected stub-code!\n"));
-	std::string code = xorstr_(R"STUB(outputChatBox('Runtime Lua Injector loaded, use F5 to inject lua code', 255, 0, 0) window = guiCreateWindow (650, 250, 600, 500, "Runtime Lua Injector for MTA", false) guiSetVisible (window, false) guiSetInputMode ("no_binds_when_editing") tabPanel = guiCreateTabPanel ( 9, 25, 590, 412, false, window ) LuaIjector = guiCreateTab ( "Runtime Lua Injector", tabPanel ) luaButton = guiCreateButton ( 10, 345, 120, 35, "Execute", false, LuaIjector ) guiSetFont ( luaButton, "default-bold-small" ) closeButton = guiCreateButton (476, 450, 105, 37, "Close", false, window) guiSetFont (closeButton, "default-bold-small") LuaIjectorLabel = guiCreateLabel ( 10, 10, 200, 25, "Enter the code for the injection", false, LuaIjector ) guiSetFont ( LuaIjectorLabel, "default-bold-small" ) LuaMemo = guiCreateMemo ( 10, 30, 565, 305, "", false, LuaIjector ) bindKey ( "F5", 'down', function ( ) guiSetVisible ( window, not guiGetVisible ( window ) ); showCursor ( guiGetVisible ( window ) ); end) addEventHandler ( 'onClientGUIClick', root, function ( btn, state ) if source == luaButton then local text = guiGetText ( LuaMemo ) if text ~= "" then local func, eror = loadstring ( text ) if eror then outputChatBox ( "Injection error "..eror, 255, 0, 0 ) return end local textfunc = pcall ( func ) if textfunc then outputChatBox ("The result of injection: "..tostring ( textfunc ), 0, 255, 0 ) end end end if source == closeButton then guiSetVisible (window, false) showCursor (false) end end))STUB");
+	//std::string code = xorstr_(R"STUB(outputChatBox('Runtime Lua Injector loaded, use F5 to inject lua code', 255, 0, 0) window = guiCreateWindow (650, 250, 600, 500, "Runtime Lua Injector for MTA", false) guiSetVisible (window, false) guiSetInputMode ("no_binds_when_editing") tabPanel = guiCreateTabPanel ( 9, 25, 590, 412, false, window ) LuaIjector = guiCreateTab ( "Runtime Lua Injector", tabPanel ) luaButton = guiCreateButton ( 10, 345, 120, 35, "Execute", false, LuaIjector ) guiSetFont ( luaButton, "default-bold-small" ) closeButton = guiCreateButton (476, 450, 105, 37, "Close", false, window) guiSetFont (closeButton, "default-bold-small") LuaIjectorLabel = guiCreateLabel ( 10, 10, 200, 25, "Enter the code for the injection", false, LuaIjector ) guiSetFont ( LuaIjectorLabel, "default-bold-small" ) LuaMemo = guiCreateMemo ( 10, 30, 565, 305, "", false, LuaIjector ) bindKey ( "F5", 'down', function ( ) guiSetVisible ( window, not guiGetVisible ( window ) ); showCursor ( guiGetVisible ( window ) ); end) addEventHandler ( 'onClientGUIClick', root, function ( btn, state ) if source == luaButton then local text = guiGetText ( LuaMemo ) if text ~= "" then local func, eror = loadstring ( text ) if eror then outputChatBox ( "Injection error "..eror, 255, 0, 0 ) return end local textfunc = pcall ( func ) if textfunc then outputChatBox ("The result of injection: "..tostring ( textfunc ), 0, 255, 0 ) end end end if source == closeButton then guiSetVisible (window, false) showCursor (false) end end))STUB");
+	std::string code = R"(function functionsDumper(sourceResource, functionName, isAllowedByACL, luaFilename, luaLineNumber, ...)
+	local args = { ... }
+	local resname = sourceResource and getResourceName(sourceResource)
+	outputConsole("[".. tostring(resname) .. "] ".. tostring(functionName) .. "(args: " .. tostring(#args) .. ") ".. ": ".. inspect(args))
+	end
+	addDebugHook( "preFunction", functionsDumper, {"triggerServerEvent"} ))";
 	int result = callLuaLoadBuffer(L, buff, sz, name);
 	callLuaLoadBuffer(L, code.c_str(), code.size(), xorstr_("RLI"));
 	LuaVM = L;
@@ -299,7 +305,7 @@ bool Hooks::InstallHooks(HMODULE mdl)
 	xorstr_("\x55\x8B\xEC\x83\xEC\x08\x56\x8B\x75\x0C\x57\xFF"), xorstr_("xxxxxxxxxxxx"));
 	if (callLuaLoadBuffer != nullptr)
 	{
-		LogInFile(xorstr_("RLI.log"), xorstr_("[RLI] Found address from signature 1! 0x%X\n"), (DWORD)callLuaLoadBuffer);
+		LogInFile(xorstr_("RLI.log"), xorstr_("[RLI] Found address from signature 1!\n"));
 		sendMTAChat = (f_SendChat)scan.FindPattern(xorstr_("client.dll"),
 		xorstr_("\x55\x8B\xEC\x6A\xFF\x68\x00\x00\x00\x00\x64\xA1\x00\x00\x00\x00\x50\x81\xEC\x00\x00\x00\x00\xA1\x00\x00\x00\x00\x33\xC5\x89\x45\xF0\x56\x57\x50\x8D\x45\xF4\x64\xA3\x00\x00\x00\x00\x80\x7D\x14\x00\x8B\x75\x0C\x8B\x7D\x08\x89\xB5\x00\x00\x00\x00\x0F\x85\x00\x00\x00\x00\x80\x7D\x10\x00\x75\x1A\x68\x00\x00\x00\x00\x57\xE8\x00\x00\x00\x00\x83\xC4\x08"),
 		xorstr_("xxxxxx????xx????xxx????x????xxxxxxxxxxxxx????xxxxxxxxxxxx????xx????xxxxxxx????xx????xxx"));
@@ -313,7 +319,7 @@ bool Hooks::InstallHooks(HMODULE mdl)
 		//xorstr_("\x55\x8B\xEC\x6A\xFF\x68\x00\x00\x00\x00\x64\xA1\x00\x00\x00\x00\x50\x81\xEC\x98\x00\x00\x00\xA1\x00\x00\x00\x00\x33\xC5\x89\x45\xF0\x53\x56\x57\x50\x8D\x45\xF4\x64\xA3\x00\x00\x00\x00\x8B\x45"),
 		//xorstr_("xxxxxx????xxxxxxxxxxxxxx????xxxxxxxxxxxxxxxxxxxx"));
 		//LogInFile(xorstr_("RLI.log"), xorstr_("[RLI] Found address from signature2!\n"));
-		//HWBP::InstallHWBP((DWORD)callLuaLoadBuffer, (DWORD)&hkLuaLoadBuffer);
+		HWBP::InstallHWBP((DWORD)callLuaLoadBuffer, (DWORD)&hkLuaLoadBuffer);
 		/*MH_CreateHook(callAddDebugHook, &AddDebugHook, reinterpret_cast<LPVOID*>(&callAddDebugHook));
 		MH_EnableHook(MH_ALL_HOOKS);*/
 		//LI_FN(CreateThread)(nullptr, 0, (LPTHREAD_START_ROUTINE)CyclicAnswer, mdl, 0, nullptr);
